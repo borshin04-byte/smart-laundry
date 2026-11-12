@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智慧乾濕衣物重量偵測系統 | Smart Laundry Monitoring System</title>
+<style>
+:root{--navy:#0b2a5b;--blue:#1d5fd1;--sky:#e8f0fe;--gray:#f3f5f9;--line:#dbe2ee;--ink:#1c2740;--mute:#5d6b85;--ok:#0f9d73;--warn:#d98200;--white:#fff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--gray);color:var(--ink);line-height:1.7}
+h1,h2,h3{line-height:1.3;margin:0 0 .5em}
+nav{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:8px 16px;overflow-x:auto;white-space:nowrap;align-items:center}
+nav b{color:var(--navy);margin-right:12px}
+nav a{color:var(--mute);text-decoration:none;padding:6px 12px;border-radius:8px;font-size:.92rem}
+nav a:hover{background:var(--sky);color:var(--blue)}
+section{max-width:1100px;margin:0 auto;padding:44px 16px}
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;max-width:none;padding:0}
+.hero .in{max-width:1100px;margin:0 auto;padding:64px 16px}
+.hero h1{font-size:clamp(1.9rem,5vw,3.2rem);letter-spacing:.02em}
+.hero p{max-width:640px;color:#d5e3ff;font-size:1.05rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 26px}
+.chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:4px 14px;border-radius:99px;font-size:.9rem}
+.btn{border:0;border-radius:10px;padding:10px 20px;font:inherit;font-weight:600;cursor:pointer;background:var(--blue);color:#fff;transition:transform .1s,background .2s}
+.btn:hover{background:#174bab}.btn:active{transform:scale(.97)}
+.btn.light{background:#fff;color:var(--navy)}.btn.light:hover{background:var(--sky)}
+.btn.ghost{background:var(--sky);color:var(--blue)}.btn.ghost:hover{background:#d5e3fc}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #7fb0ff;outline-offset:2px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat small{color:var(--mute)}
+.stat strong{display:block;font-size:1.8rem;color:var(--navy);font-variant-numeric:tabular-nums}
+.stat strong i{font-size:.9rem;font-style:normal;color:var(--mute);margin-left:3px}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin-top:14px}
+.flow div{flex:1 1 120px;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:.9rem;position:relative}
+.flow div b{display:block;color:var(--blue)}
+.flow div+div:before{content:"›";position:absolute;left:-12px;top:50%;transform:translateY(-50%);color:var(--blue);font-size:1.6rem;font-weight:700}
+.bar{height:22px;background:var(--sky);border-radius:99px;overflow:hidden;position:relative}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4d8cf5,var(--blue));border-radius:99px;transition:width .3s}
+.bar.done>i{background:linear-gradient(90deg,#2cc79a,var(--ok))}
+.mark{position:absolute;top:0;bottom:0;width:2px;background:var(--navy)}
+.status{display:inline-block;padding:3px 14px;border-radius:99px;font-weight:700;font-size:.95rem;background:var(--sky);color:var(--blue)}
+.status.run{background:#e1efff;color:var(--blue)}.status.pause{background:#fff1d6;color:var(--warn)}.status.done{background:#d9f5ec;color:var(--ok)}
+.msg{font-size:1.25rem;font-weight:700;margin:12px 0}
+label.sl{display:block;margin:12px 0}
+label.sl span{display:flex;justify-content:space-between;font-size:.92rem;color:var(--mute)}
+label.sl span b{color:var(--navy)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+select{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;width:100%}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.alert{display:none;align-items:center;gap:14px;background:#d9f5ec;border:1px solid #9fdfc7;border-radius:14px;padding:14px 18px;margin-bottom:16px}
+.alert.show{display:flex}
+.alert .txt{flex:1}
+.bell{font-size:2rem;display:inline-block}
+.alert.show .bell{animation:ring .6s ease-in-out infinite}
+@keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(-18deg)}75%{transform:rotate(18deg)}}
+.sw{display:flex;align-items:center;gap:10px;cursor:pointer}
+.sw input{width:42px;height:22px;accent-color:var(--blue)}
+canvas{width:100%;height:190px;display:block}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:500}
+.tbl{overflow-x:auto}
+.note{background:#fff8e6;border:1px solid #f1d9a0;color:#7a5500;border-radius:10px;padding:8px 14px;font-size:.88rem;margin-bottom:16px}
+.hw h3{color:var(--navy)}.hw p{margin:.3em 0;color:var(--mute);font-size:.94rem}.hw .use{color:var(--ink)}
+.q{margin-bottom:18px}
+.opts{display:grid;gap:8px;margin-top:8px}
+.opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--blue);background:var(--sky)}
+.opt.ok{background:#d9f5ec;border-color:var(--ok)}.opt.bad{background:#fde4e4;border-color:#d64545}
+.exp{font-size:.9rem;color:var(--mute);margin-top:6px}
+footer{text-align:center;color:var(--mute);padding:28px 16px;font-size:.88rem}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<nav><b>智慧晾衣監測</b><a href="#intro">系統介紹</a><a href="#dash">即時儀表板</a><a href="#clothes">衣物管理</a><a href="#hw">硬體元件</a><a href="#quiz">互動測驗</a></nav>
+
+<section class="hero"><div class="in">
+<h1>智慧乾濕衣物重量偵測系統</h1>
+<h2 style="font-weight:400;font-size:1.2rem;color:#bcd3ff">Smart Laundry Monitoring System</h2>
+<p>在宿舍晾衣空間裝上重量與溫濕度感測器，依衣物重量下降幅度判斷乾了沒，乾了就提醒你收衣服。</p>
+<div class="chips"><span>學生宿舍陽台</span><span>重量變化判斷乾燥</span><span>乾燥即時提醒</span></div>
+<button class="btn light" onclick="document.getElementById('dash').scrollIntoView()">進入模擬儀表板</button>
+</div></section>
+
+<section id="intro">
+<h2>系統介紹</h2>
+<div class="grid g2">
+<div class="card"><h3>設計目的</h3><p>宿舍晾衣空間有限，天氣與濕度又常變化，使用者很難判斷衣服是否已乾，常常太早收到濕衣服，或忘記收而讓衣服晾過久。本系統用重量變化取代肉眼判斷，客觀估算乾燥程度。</p></div>
+<div class="card"><h3>應用情境</h3><p>同學洗好衣服掛上感測晾衣桿後，系統記錄初始重量並持續比對目前重量。當重量下降到設定門檻，系統就透過蜂鳴器與通知提醒收衣。梅雨季濕度高時，也能看出乾燥速度變慢。</p></div>
+</div>
+<h3 style="margin-top:24px">系統運作流程</h3>
+<div class="flow">
+<div><b>衣物</b>掛在晾衣桿</div><div><b>Load Cell</b>感測重量</div><div><b>HX711</b>放大並轉成數位</div><div><b>DHT22</b>量測溫濕度</div><div><b>ESP32</b>計算乾燥程度</div><div><b>提醒</b>蜂鳴器與通知</div>
+</div>
+</section>
+
+<section id="dash">
+<h2>即時感測儀表板</h2>
+<div class="note">本頁所有感測數據皆由 JavaScript 模擬產生，並非真實硬體讀值。拖動滑桿或按下「開始模擬」即可看到系統反應。</div>
+<div id="alertBox" class="alert"><span class="bell">🔔</span><div class="txt"><b>衣物已乾燥，可以收衣服</b><br><small id="alertSub"></small></div><button class="btn ghost" id="dismiss">我知道了</button></div>
+<div class="stats">
+<div class="stat"><small>目前重量</small><strong><span id="vCur">0</span><i>kg</i></strong></div>
+<div class="stat"><small>初始重量</small><strong><span id="vInit">0</span><i>kg</i></strong></div>
+<div class="stat"><small>環境溫度</small><strong><span id="vTemp">0</span><i>°C</i></strong></div>
+<div class="stat"><small>環境濕度</small><strong><span id="vHum">0</span><i>%</i></strong></div>
+<div class="stat"><small>乾燥程度</small><strong><span id="vDry">0</span><i>%</i></strong></div>
+<div class="stat"><small>系統狀態</small><span class="status" id="vState">待機</span><div style="font-size:.8rem;color:var(--mute);margin-top:6px">模擬時間 <span id="vTime">0</span> 分鐘</div></div>
+</div>
+<div class="grid g2">
+<div class="card">
+<h3>乾燥進度</h3>
+<div class="bar" id="bar"><i id="barFill"></i><span class="mark" id="mark"></span></div>
+<div style="display:flex;justify-content:space-between;font-size:.85rem;color:var(--mute);margin-top:4px"><span>0%</span><span>門檻 <b id="vThr">90</b>%（黑線）</span><span>100%</span></div>
+<div class="msg" id="msg">衣物仍在乾燥中</div>
+<div class="row">
+<button class="btn" id="bStart">開始模擬</button><button class="btn ghost" id="bPause">暫停</button><button class="btn ghost" id="bReset">重設</button>
+</div>
+<label class="sw" style="margin-top:16px"><input type="checkbox" id="alertSw" checked><span>開啟乾燥提醒（蜂鳴器與通知）</span></label>
+<div class="row"><button class="btn ghost" id="bTest">🔔 測試蜂鳴器</button></div>
+</div>
+<div class="card">
+<h3>感測模擬控制</h3>
+<label class="sl"><span>衣物重量<b id="lCur"></b></span><input type="range" id="sCur" min="0.10" max="1.00" step="0.01"></label>
+<label class="sl"><span>環境溫度<b id="lTemp"></b></span><input type="range" id="sTemp" min="10" max="45" step="1" value="28"></label>
+<label class="sl"><span>環境濕度<b id="lHum"></b></span><input type="range" id="sHum" min="20" max="100" step="1" value="60"></label>
+<label class="sl"><span>乾燥門檻<b id="lThr"></b></span><input type="range" id="sThr" min="60" max="100" step="1" value="90"></label>
+<p style="font-size:.85rem;color:var(--mute);margin:8px 0 0">乾燥程度 = （初始重量 − 目前重量）÷（初始重量 − 乾衣重量）。溫度越高、濕度越低，模擬時衣物乾得越快。</p>
+</div>
+</div>
+<div class="card" style="margin-top:16px"><h3>乾燥程度即時趨勢</h3><canvas id="cTrend"></canvas></div>
+</section>
+
+<section id="clothes">
+<h2>衣物管理</h2>
+<div class="grid g2">
+<div class="card">
+<h3>選擇衣物類型</h3>
+<select id="typeSel"><option value="shirt">T恤</option><option value="pants">褲子</option><option value="towel">毛巾</option></select>
+<div class="tbl" style="margin-top:12px"><table><thead><tr><th>類型</th><th>初始（濕）重量</th><th>乾衣重量</th><th>含水量</th></tr></thead><tbody id="typeTbl"></tbody></table></div>
+<p style="font-size:.85rem;color:var(--mute)">切換類型會把重量重設為該衣物的初始重量。以上重量為示範用假設值。</p>
+</div>
+<div class="card"><h3>各次乾燥耗時（模擬分鐘）</h3><canvas id="cHist"></canvas></div>
+</div>
+<div class="card" style="margin-top:16px">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0">乾燥紀錄</h3><button class="btn ghost" id="bClear">清除紀錄</button></div>
+<div class="tbl"><table><thead><tr><th>完成時間</th><th>衣物</th><th>重量變化</th><th>溫度／濕度</th><th>耗時</th></tr></thead><tbody id="recTbl"></tbody></table></div>
+</div>
+</section>
+
+<section id="hw">
+<h2>硬體元件介紹</h2>
+<div class="grid g3 hw">
+<div class="card"><h3>重量感測器（Load Cell）</h3><p>受力時內部應變片電阻改變，輸出微小電壓訊號，訊號大小與重量成正比。</p><p class="use"><b>系統用途：</b>承載晾衣桿，量測衣物重量變化。</p></div>
+<div class="card"><h3>HX711 重量感測模組</h3><p>24 位元類比數位轉換晶片，內建放大器，專門讀取 Load Cell 的微弱訊號。</p><p class="use"><b>系統用途：</b>把重量訊號放大並轉成數位值傳給微控制器。</p></div>
+<div class="card"><h3>DHT22 溫濕度感測器</h3><p>以單線數位介面輸出溫度與相對濕度，適合室內環境監測。</p><p class="use"><b>系統用途：</b>量測環境條件，輔助解讀乾燥速度。</p></div>
+<div class="card"><h3>Arduino 或 ESP32</h3><p>微控制器，負責讀取感測器、執行程式邏輯。ESP32 內建 Wi-Fi 與藍牙，可把資料傳到手機或網頁。</p><p class="use"><b>系統用途：</b>計算乾燥程度、控制蜂鳴器並傳送通知。</p></div>
+<div class="card"><h3>蜂鳴器</h3><p>通電後發出聲響的簡單輸出元件。</p><p class="use"><b>系統用途：</b>衣物乾燥時發出聲音提醒使用者。</p></div>
+</div>
+</section>
+
+<section id="quiz">
+<h2>互動測驗</h2>
+<div class="card"><div id="quizBox"></div><div class="msg" id="quizScore" style="margin-bottom:0"></div><div class="row"><button class="btn ghost" id="bQuiz">重新作答</button></div></div>
+</section>
+
+<footer>智慧乾濕衣物重量偵測系統 · 互動模擬網頁 · 數據皆為模擬</footer>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var TYPES={shirt:{n:"T恤",init:.35,dry:.20},pants:{n:"褲子",init:.80,dry:.50},towel:{n:"毛巾",init:.60,dry:.30}};
+var S={type:"shirt",cur:.35,temp:28,hum:60,thr:90,state:"idle",tick:0,alert:true,done:false,trend:[],recs:[],timer:null};
+var STATE_TXT={idle:"待機",run:"乾燥中",pause:"已暫停",done:"已乾燥"};
+var actx=null;
+
+function T(){return TYPES[S.type]}
+function dryness(){var t=T();var d=(t.init-S.cur)/(t.init-t.dry)*100;return Math.max(0,Math.min(100,d))}
+
+function beep(n){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    for(var i=0;i<(n||3);i++){
+      var o=actx.createOscillator(),g=actx.createGain(),t0=actx.currentTime+i*.35;
+      o.type="square";o.frequency.value=880;g.gain.setValueAtTime(.08,t0);g.gain.setValueAtTime(0,t0+.2);
+      o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+.22);
+    }
+  }catch(e){}
+}
+
+function finish(){
+  S.done=true;S.state="done";stopTimer();
+  var t=T();
+  S.recs.unshift({time:new Date().toLocaleTimeString("zh-TW",{hour12:false}),name:t.n,from:t.init,to:S.cur,temp:S.temp,hum:S.hum,min:S.tick});
+  if(S.recs.length>8)S.recs.pop();
+  if(S.alert){$("alertSub").textContent=t.n+"已達 "+S.thr+"% 乾燥門檻，模擬耗時 "+S.tick+" 分鐘。";$("alertBox").classList.add("show");beep(3)}
+}
+
+function check(){
+  var d=dryness();
+  if(!S.done&&d>=S.thr&&(S.tick>0||S.state!=="idle"||true)&&d>0){finish()}
+  else if(S.done&&d<S.thr){S.done=false;S.state="idle";$("alertBox").classList.remove("show")}
+}
+
+function pushTrend(){S.trend.push(dryness());if(S.trend.length>60)S.trend.shift()}
+
+function step(){
+  var t=T(),water=t.init-t.dry;
+  var tf=.4+(S.temp-10)/35*1.2,hf=1.3-S.hum/100*1.1;
+  S.cur=Math.max(t.dry,S.cur-water*.02*tf*hf);
+  S.cur=Math.round(S.cur*1000)/1000;
+  S.tick++;pushTrend();check();render();
+}
+function startTimer(){if(!S.timer)S.timer=setInterval(step,500)}
+function stopTimer(){clearInterval(S.timer);S.timer=null}
+
+function render(){
+  var d=dryness(),t=T(),dry=d>=S.thr;
+  $("vCur").textContent=S.cur.toFixed(2);$("vInit").textContent=t.init.toFixed(2);
+  $("vTemp").textContent=S.temp;$("vHum").textContent=S.hum;$("vDry").textContent=d.toFixed(0);$("vTime").textContent=S.tick;
+  $("vThr").textContent=S.thr;$("mark").style.left="calc("+S.thr+"% - 1px)";
+  $("barFill").style.width=d+"%";$("bar").classList.toggle("done",dry);
+  var st=$("vState");st.textContent=STATE_TXT[S.state];st.className="status "+S.state;
+  $("msg").textContent=dry?"衣物已乾燥，可以收衣服":"衣物仍在乾燥中";
+  $("msg").style.color=dry?"var(--ok)":"var(--ink)";
+  $("sCur").value=S.cur;
+  $("lCur").textContent=S.cur.toFixed(2)+" kg";$("lTemp").textContent=S.temp+" °C";$("lHum").textContent=S.hum+" %";$("lThr").textContent=S.thr+" %";
+  $("bStart").textContent=S.state==="pause"?"繼續模擬":"開始模擬";
+  $("bStart").disabled=S.state==="run"||S.state==="done";$("bPause").disabled=S.state!=="run";
+  $("bStart").style.opacity=$("bStart").disabled?.5:1;$("bPause").style.opacity=$("bPause").disabled?.5:1;
+  drawTrend();
+}
+
+function renderTables(){
+  $("typeTbl").innerHTML=Object.keys(TYPES).map(function(k){var x=TYPES[k];
+    return "<tr"+(k===S.type?' style="background:var(--sky)"':"")+"><td>"+x.n+"</td><td>"+x.init.toFixed(2)+" kg</td><td>"+x.dry.toFixed(2)+" kg</td><td>"+(x.init-x.dry).toFixed(2)+" kg</td></tr>"}).join("");
+  $("recTbl").innerHTML=S.recs.length?S.recs.map(function(r){
+    return "<tr><td>"+r.time+"</td><td>"+r.name+"</td><td>"+r.from.toFixed(2)+" → "+r.to.toFixed(2)+" kg</td><td>"+r.temp+"°C／"+r.hum+"%</td><td>"+r.min+" 分鐘</td></tr>"}).join("")
+    :'<tr><td colspan="5" style="color:var(--mute)">尚無紀錄。按「開始模擬」並等待衣物乾燥，系統會自動新增一筆。</td></tr>';
+  drawHist();
+}
+
+function setup(c){
+  var r=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
+  c.width=w*r;c.height=h*r;var x=c.getContext("2d");x.setTransform(r,0,0,r,0,0);x.clearRect(0,0,w,h);
+  return {x:x,w:w,h:h};
+}
+function axes(p,maxv,unit){
+  var x=p.x;x.font="11px sans-serif";x.fillStyle="#5d6b85";x.strokeStyle="#dbe2ee";x.lineWidth=1;
+  for(var i=0;i<=4;i++){var y=10+(p.h-34)*(1-i/4);x.beginPath();x.moveTo(36,y);x.lineTo(p.w-8,y);x.stroke();x.fillText(Math.round(maxv*i/4)+unit,2,y+4)}
+}
+function drawTrend(){
+  var c=$("cTrend"),p=setup(c),x=p.x;axes(p,100,"%");
+  var ty=10+(p.h-34)*(1-S.thr/100);x.setLineDash([5,4]);x.strokeStyle="#0f9d73";x.beginPath();x.moveTo(36,ty);x.lineTo(p.w-8,ty);x.stroke();x.setLineDash([]);
+  x.fillStyle="#0f9d73";x.fillText("門檻",p.w-36,ty-4);
+  var a=S.trend;if(a.length<2){x.fillStyle="#5d6b85";x.fillText("開始模擬或拖動滑桿後，這裡會顯示乾燥程度變化",50,p.h/2);return}
+  var gw=p.w-44,gh=p.h-34;x.strokeStyle="#1d5fd1";x.lineWidth=2.5;x.beginPath();
+  a.forEach(function(v,i){var px=36+gw*i/59,py=10+gh*(1-v/100);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
+}
+function drawHist(){
+  var c=$("cHist"),p=setup(c),x=p.x,r=S.recs.slice().reverse();
+  if(!r.length){axes(p,10,"");x.fillStyle="#5d6b85";x.font="12px sans-serif";x.fillText("完成一次乾燥後會顯示長條圖",50,p.h/2);return}
+  var mx=Math.max.apply(null,r.map(function(v){return v.min}).concat([10]));mx=Math.ceil(mx/20)*20;axes(p,mx,"");
+  var gw=p.w-44,bw=Math.min(40,gw/r.length*.6);
+  r.forEach(function(v,i){var bx=36+gw*(i+.5)/r.length-bw/2,bh=(p.h-34)*v.min/mx;
+    x.fillStyle="#1d5fd1";x.fillRect(bx,p.h-24-bh,bw,bh);x.fillStyle="#1c2740";x.font="11px sans-serif";x.textAlign="center";
+    x.fillText(v.min,bx+bw/2,p.h-28-bh);x.fillStyle="#5d6b85";x.fillText(v.name,bx+bw/2,p.h-8);x.textAlign="left"});
+}
+
+/* events */
+$("bStart").onclick=function(){
+  if(S.done)return;
+  if(dryness()>=S.thr){check();render();return}
+  S.state="run";startTimer();render();
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
+};
+$("bPause").onclick=function(){if(S.state==="run"){S.state="pause";stopTimer();render()}};
+$("bReset").onclick=function(){reset()};
+function reset(){
+  stopTimer();S.cur=T().init;S.tick=0;S.state="idle";S.done=false;S.trend=[];
+  $("alertBox").classList.remove("show");render();
+}
+function manual(){
+  if(S.state==="idle"&&!S.done&&dryness()>0)S.state="pause";
+  pushTrend();check();render();
+}
+$("sCur").oninput=function(e){S.cur=parseFloat(e.target.value);manual()};
+$("sTemp").oninput=function(e){S.temp=+e.target.value;pushTrend();render()};
+$("sHum").oninput=function(e){S.hum=+e.target.value;pushTrend();render()};
+$("sThr").oninput=function(e){S.thr=+e.target.value;check();render()};
+$("typeSel").onchange=function(e){S.type=e.target.value;renderTables();reset()};
+$("alertSw").onchange=function(e){S.alert=e.target.checked;if(!S.alert)$("alertBox").classList.remove("show");else if(S.done)$("alertBox").classList.add("show")};
+$("dismiss").onclick=function(){$("alertBox").classList.remove("show")};
+$("bTest").onclick=function(){if(!S.alert)return alert("提醒功能目前為關閉狀態，請先開啟。");beep(3);var b=$("alertBox");$("alertSub").textContent="這是蜂鳴器測試。";b.classList.add("show");setTimeout(function(){if(!S.done)b.classList.remove("show")},2500)};
+$("bClear").onclick=function(){S.recs=[];renderTables()};
+window.addEventListener("resize",function(){drawTrend();drawHist()});
+
+/* quiz */
+var QS=[
+ {q:"Load Cell 在本系統中的主要用途是什麼？",o:["量測環境濕度","量測衣物重量","發出提醒聲音","連接 Wi-Fi"],a:1,e:"Load Cell 受力後輸出與重量成正比的微小訊號。"},
+ {q:"HX711 模組的功能是？",o:["放大 Load Cell 訊號並轉成數位值","量測溫度","驅動蜂鳴器","供應 5V 電源"],a:0,e:"HX711 是專為 Load Cell 設計的 24 位元 ADC 與放大器。"},
+ {q:"衣物變乾時，重量會如何變化？",o:["逐漸增加","保持不變","逐漸減少","先減少再增加到初始值"],a:2,e:"水分蒸發後衣物變輕，重量下降幅度可用來估算乾燥程度。"},
+ {q:"DHT22 可以量測哪些數據？",o:["重量與壓力","溫度與濕度","光照與聲音","電壓與電流"],a:1,e:"DHT22 輸出溫度與相對濕度。"},
+ {q:"在其他條件相同下，環境濕度升高，衣物乾燥速度會？",o:["變快","變慢","完全不變","立刻乾燥"],a:1,e:"空氣濕度越高，水分越不容易蒸發，乾燥變慢。"}
+];
+var score=0,answered=0;
+function buildQuiz(){
+  score=0;answered=0;$("quizScore").textContent="";
+  $("quizBox").innerHTML=QS.map(function(q,i){
+    return '<div class="q"><b>第 '+(i+1)+' 題：'+q.q+'</b><div class="opts">'+q.o.map(function(o,j){return '<button class="opt" data-q="'+i+'" data-o="'+j+'">'+o+'</button>'}).join("")+'</div><div class="exp" id="e'+i+'"></div></div>'}).join("");
+  Array.prototype.forEach.call(document.querySelectorAll(".opt"),function(b){b.onclick=answer});
+}
+function answer(ev){
+  var b=ev.currentTarget,qi=+b.dataset.q,oi=+b.dataset.o,q=QS[qi];
+  var btns=document.querySelectorAll('.opt[data-q="'+qi+'"]');
+  Array.prototype.forEach.call(btns,function(x,j){x.disabled=true;if(j===q.a)x.classList.add("ok")});
+  var right=oi===q.a;if(right)score++;else b.classList.add("bad");
+  $("e"+qi).textContent=(right?"答對了！":"答錯了。")+q.e;
+  answered++;
+  $("quizScore").textContent=answered<QS.length?"目前得分："+score+" / "+QS.length:"測驗完成，得分 "+score+" / "+QS.length+"（"+Math.round(score/QS.length*100)+" 分）";
+}
+$("bQuiz").onclick=buildQuiz;
+
+/* init */
+reset();renderTables();buildQuiz();
+})();
+</script>
+</body>
+</html>
